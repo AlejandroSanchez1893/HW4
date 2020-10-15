@@ -1,0 +1,73 @@
+---
+title: "HW 4"
+author: "Alejandro Sanchez"
+date: "10/14/2020"
+output: html_document
+---
+The goal of this lab was to see if we could find a correlation between certain variables and wage. I initially started using the variables given in the lab. After that I decided that I was going to go with the variables of AGE and Education because in my opinion those are the factors that most impact income from wages and we would see this with a correlation between the 2 variables and income.
+```{R}
+load("C:/Users/alejo/Desktop/Econometrics/ecob2000_lecture1/acs2017_ny_data.RData")
+attach(acs2017_ny)
+use_varb <- (AGE >= 25) & (AGE <= 55) & (LABFORCE == 2) & (WKSWORK2 > 4) & (UHRSWORK >= 35)
+dat_use <- subset(acs2017_ny,use_varb) # 
+detach()
+attach(dat_use)
+```
+
+```{R}
+model_temp1 <- lm(INCWAGE ~ AGE + female + AfAm + Asian + Amindian + race_oth + Hispanic + educ_hs + educ_somecoll + educ_college + educ_advdeg)
+summary(model_temp1)
+plot(model_temp1)
+```
+
+```{R}
+require(stargazer)
+stargazer(model_temp1, type = "text")
+```
+
+```{R}
+require(AER)
+```
+
+```{R}
+NNobs <- length(INCWAGE)
+set.seed(12345)
+graph_obs <- (runif(NNobs) < 0.1)
+dat_graph <-subset(dat_use,graph_obs)  
+plot(INCWAGE ~ jitter(AGE, factor = 2), pch = 16, col = rgb(0.5, 0.5, 0.5, alpha = 0.2), data = dat_graph)
+plot(INCWAGE ~ jitter(AGE, factor = 2), pch = 16, col = rgb(0.5, 0.5, 0.5, alpha = 0.2), ylim = c(0,150000), data = dat_graph)
+to_be_predicted2 <- data.frame(AGE = 25:55, female = 1, AfAm = 0, Asian = 0, Amindian = 1, race_oth = 1, Hispanic = 1, educ_hs = 0, educ_somecoll = 0, educ_college = 1, educ_advdeg = 0)
+to_be_predicted2$yhat <- predict(model_temp1, newdata = to_be_predicted2)
+lines(yhat ~ AGE, data = to_be_predicted2)
+```
+After I ran this I found that all together all the variables from the initial part of the lab create a statistically significant correlation between them and income. Even though the result is that there is a correlation between them I found that there were values that individually were not such as "Amindian" and "Asian". This made my decision to narrow it down to age and education an easier one.
+```{R}
+model_temp2 <- lm(INCWAGE ~ AGE + educ_hs + educ_somecoll + educ_college + educ_advdeg)
+summary(model_temp2)
+plot(model_temp2)
+```
+
+```{R}
+require(stargazer)
+stargazer(model_temp2, type = "text")
+```
+When we look at the results of this regression we also see that there is a correlation due to the fact that the Pvalue of the test is much smaller at a value of 2.2e-16 when compared to the .05 level it is required to be under when using 95% confidence in order for it to be deemed statistically significant and to rejec the null hypothesis of there being no correlation between the variables and income.
+```{r}
+model_temp3 <- lm(INCWAGE ~ AGE)
+summary(model_temp3)
+plot(model_temp3)
+require(stargazer)
+stargazer(model_temp3, type = "text")
+```
+After running this regression when we look at age there is statistically significant evidence that AGE plays a major role in deciding wage. We see this when we look at the t-value that R spits out after the running the regression which is significantly higher than the 1.96 t-value we use at the 95% confidence level. We also see a very small P-value which is definitely smaller than the .05 value when we choose a 95% confidence level. We once again would reject the null hypothesis because it shows that there is a statistically significant correlation between the variable AGE and income.
+
+```{R}
+model_temp4 <- lm(INCWAGE ~ educ_hs + educ_somecoll + educ_college + educ_advdeg)
+summary(model_temp4)
+plot(model_temp4)
+require(stargazer)
+stargazer(model_temp4, type = "text")
+```
+
+For the last one I decided to only use education as a variable which consists of the 4 different levels of education which are H.S, Some College, College Degree (Bachelor's), and having an advanced degree. 
+We can see here that all education impact wages because they all have a smaller P-value than .05 required for 95% confidence. However one thing I looked at that I found interesting was that the higher in education you went the higher the t-value was which led me to draw the inference that the higher education you have the more impact that education has on your income. We can see that when comparing the INCWAGE numbers that jumo significantly every time you jump and education level. 
